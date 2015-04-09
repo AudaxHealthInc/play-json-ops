@@ -3,7 +3,9 @@ name := "play-json-ops"
 
 organization := "me.jeffmay"
 
-crossScalaVersions := Seq("2.10.4", "2.11.4")
+version := "0.2.1"
+
+crossScalaVersions := Seq("2.10.4", "2.11.6")
 
 scalacOptions := {
   // the deprecation:false flag is only supported by scala >= 2.11.3, but needed for scala >= 2.11.0 to avoid warnings
@@ -17,13 +19,8 @@ scalacOptions := {
   }
 }
 
-
-lazy val playVersion = settingKey[String]("The version of Play Json")
-
-playVersion := "2.3.1"
-
 libraryDependencies := Seq(
-  "com.typesafe.play" %% "play-json" % playVersion.value,
+  "com.typesafe.play" %% "play-json" % "2.3.7",
   "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 ).map(_.withSources())
