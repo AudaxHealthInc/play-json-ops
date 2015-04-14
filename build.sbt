@@ -47,7 +47,7 @@ publishArtifact in(Test, packageBin) := false
 // disable publishing the test sources jar
 publishArtifact in(Test, packageSrc) := false
 
-lazy val scalaCheckOps = RootProject(uri("git://github.com/jeffmay/scalacheck-ops.git#v0.1.0"))
+lazy val scalaCheckOps = RootProject(uri("git://github.com/AudaxHealthInc/scalacheck-ops.git#v0.1.0"))
 
 lazy val jsonOps = project in file(".") dependsOn scalaCheckOps
 
