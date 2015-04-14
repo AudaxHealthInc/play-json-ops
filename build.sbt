@@ -3,7 +3,7 @@ name := "play-json-ops"
 
 organization := "me.jeffmay"
 
-version := "0.2.1"
+version := "0.2.2"
 
 crossScalaVersions := Seq("2.10.4", "2.11.6")
 
@@ -21,6 +21,8 @@ scalacOptions := {
 
 libraryDependencies := Seq(
   "com.typesafe.play" %% "play-json" % "2.3.7",
+  // these are not limited to the test scope since there is library code that enables free unit tests
+  // when extending a generic test class for PlaySerializationTests
   "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 ).map(_.withSources())
@@ -44,3 +46,8 @@ publishArtifact in(Test, packageBin) := false
 
 // disable publishing the test sources jar
 publishArtifact in(Test, packageSrc) := false
+
+lazy val scalaCheckOps = RootProject(uri("git://github.com/AudaxHealthInc/scalacheck-ops.git#v0.1.0"))
+
+lazy val jsonOps = project in file(".") dependsOn scalaCheckOps
+
