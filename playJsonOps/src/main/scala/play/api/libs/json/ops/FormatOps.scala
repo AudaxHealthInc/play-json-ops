@@ -99,7 +99,7 @@ trait FormatAsEither {
     new EitherFormatBuilder[Failed, Success]
 
   /**
-   * @see [[asEither(Format<Failed>, Format<Success>)]]
+   * @see [[asEither(Format[Failed], Format[Success])]]
    */
   class EitherFormatBuilder[Left, Right] private[FormatAsEither] (implicit formatLeft: Format[Left], formatRight: Format[Right]) {
 
@@ -112,13 +112,13 @@ trait FormatAsEither {
      *                    "Left" format
      * @param leftType The model which represents the "Left" or "Failed" case
      * @param rightType The model which represents the "Right" or "Success" case
-     * @param evA evidence which proves that leftType extends some common parent class X
-     * @param evB evidence which proves that rightType extends some common parent class X
+     * @param leftAsX evidence which proves that leftType extends some common parent class X
+     * @param rightAsX evidence which proves that rightType extends some common parent class X
      */
     def from[X](jsonIsRight: JsValue => Boolean)
       (implicit
         leftType: ClassTag[Left], rightType: ClassTag[Right],
-        evA: Left <:< X, evB: Right <:< X
+        leftAsX: Left <:< X,      rightAsX: Right <:< X
         ): Format[X] = {
       from(jsonIsRight, {
         case leftType(_) => false
@@ -137,29 +137,25 @@ trait FormatAsEither {
      *                    "Success" format, otherwise use the "Left" or "Failed" format
      * @param objectIsRight the condition which dictates how to serialize the object to Json. If true, use the "Right"
      *                      or "Success" format, otherwise use the "Left" or "Failed" format
-     * @param evA evidence which proves that leftType extends some common parent class X
-     * @param evB evidence which proves that rightType extends some common parent class X
+     * @param leftAsX evidence which proves that leftType extends some common parent class X
+     * @param rightAsX evidence which proves that rightType extends some common parent class X
      */
     def from[X](jsonIsRight: JsValue => Boolean, objectIsRight: X => Boolean)
-      (implicit evA: Left <:< X, evB: Right <:< X): Format[X] = new Format[X] {
+      (implicit leftAsX: Left <:< X, rightAsX: Right <:< X): Format[X] = new Format[X] {
 
       override def reads(json: JsValue): JsResult[X] = {
-        val isRight = jsonIsRight(json)
-        val format =
-          if (isRight) formatRight.reads(json)
-          else formatLeft.reads(json)
-        // Safe to cast because we have evidence that A <: X and B <: X and JsResult is covariant
-        format.asInstanceOf[JsResult[X]]
+        if (jsonIsRight(json))
+          formatRight.reads(json) map rightAsX
+        else
+          formatLeft.reads(json) map leftAsX
       }
 
       override def writes(o: X): JsValue = {
-        val isRight = objectIsRight(o)
-        if (isRight) {
+        // Assuming X is a subtype of both Left and Right
+        if (objectIsRight(o))
           formatRight.writes(o.asInstanceOf[Right])
-        }
-        else {
+        else
           formatLeft.writes(o.asInstanceOf[Left])
-        }
       }
     }
   }
