@@ -1,53 +1,82 @@
 
-name := "play-json-ops"
+lazy val common = Seq(
 
-organization := "me.jeffmay"
+  organization := "com.rallyhealth",
 
-version := "0.2.2"
+  organizationName := "Rally Health",
 
-crossScalaVersions := Seq("2.10.4", "2.11.6")
+  // this version is common to all projects in this build
+  version := "1.1.0",
 
-scalacOptions := {
-  // the deprecation:false flag is only supported by scala >= 2.11.3, but needed for scala >= 2.11.0 to avoid warnings
-  CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, scalaMinor)) if scalaMinor >= 11 =>
-      // For scala versions >= 2.11.3
-      Seq("-Xfatal-warnings", "-deprecation:false")
-    case Some((2, scalaMinor)) if scalaMinor < 11 =>
-      // For scala versions 2.10.x
-      Seq("-Xfatal-warnings")
-  }
-}
+  crossScalaVersions := Seq("2.11.6", "2.10.4"),
 
-libraryDependencies := Seq(
-  "com.typesafe.play" %% "play-json" % "2.3.7",
-  // these are not limited to the test scope since there is library code that enables free unit tests
-  // when extending a generic test class for PlaySerializationTests
-  "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
-).map(_.withSources())
+  scalacOptions ++= {
+    // the deprecation:false flag is only supported by scala >= 2.11.3, but needed for scala >= 2.11.0 to avoid warnings
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, scalaMinor)) if scalaMinor >= 11 =>
+        // For scala versions >= 2.11.3
+        Seq("-Xfatal-warnings", "-deprecation:false")
+      case Some((2, scalaMinor)) if scalaMinor < 11 =>
+        // For scala versions 2.10.x
+        Seq("-Xfatal-warnings", "-deprecation")
+    }
+  } ++ Seq(
+    "-feature",
+    "-Ywarn-dead-code",
+    "-encoding", "UTF-8"
+  ),
 
-publishTo <<= version { version: String =>
-  val repoBaseUrl = "https://artifacts.werally.in/artifactory/"
-  val (name, url) = if (version.contains("-SNAPSHOT"))
-    ("libs-snapshot-local", repoBaseUrl + "libs-snapshot-local")
-  else
-    ("libs-release-local", repoBaseUrl + "libs-release-local")
-  Some(Resolver.url(name, new URL(url))(Resolver.mavenStylePatterns))
-}
+  // don't publish the test code as an artifact anymore, since we have playJsonTests
+  publishArtifact in Test := false,
 
-// All of the published versions
-resolvers += "Artifactory Libs Release" at "https://artifacts.werally.in/artifactory/libs-release"
+  // disable compilation of ScalaDocs, since this always breaks on links
+  sources in(Compile, doc) := Seq.empty,
 
-sources in(Compile, doc) := Seq.empty
+  // disable publishing empty ScalaDocs
+  publishArtifact in (Compile, packageDoc) := false,
 
-// disable publishing the jar produced by `test:package`
-publishArtifact in(Test, packageBin) := false
+  licenses += ("Apache-2.0", url("http://opensource.org/licenses/apache-2.0")),
 
-// disable publishing the test sources jar
-publishArtifact in(Test, packageSrc) := false
+  // Rally Settings
+  /////////////////
 
-lazy val scalaCheckOps = RootProject(uri("git://github.com/AudaxHealthInc/scalacheck-ops.git#v0.1.0"))
+  publishTo <<= version { version: String =>
+    val repoBaseUrl = "https://artifacts.werally.in/artifactory/"
+    val (name, url) = if (version.contains("-SNAPSHOT"))
+      ("libs-snapshot-local", repoBaseUrl + "libs-snapshot-local")
+    else
+      ("libs-release-local", repoBaseUrl + "libs-release-local")
+    Some(Resolver.url(name, new URL(url))(Resolver.mavenStylePatterns))
+  },
 
-lazy val jsonOps = project in file(".") dependsOn scalaCheckOps
+  // All of the published versions
+  resolvers += "Artifactory Libs Release" at "https://artifacts.werally.in/artifactory/libs-release"
 
+)
+
+lazy val playJsonOps = project in file("playJsonOps") settings(common: _*) settings (
+
+  name := "play-json-ops",
+
+  libraryDependencies := Seq(
+    "com.typesafe.play" %% "play-json" % "2.3.7"
+  ).map(_.withSources())
+
+) dependsOn (
+  playJsonTests % "compile->test"
+)
+
+lazy val playJsonTests = project in file("playJsonTests") settings(common: _*) settings (
+
+  name := "play-json-tests",
+
+  libraryDependencies := Seq(
+    "com.typesafe.play" %% "play-json" % "2.3.7",
+    "org.scalacheck" %% "scalacheck" % "1.12.2",
+    "org.scalatest" %% "scalatest" % "2.2.4",
+    "com.rallyhealth" %% "scalacheck-ops" % "1.0.0"
+  ).map(_.withSources())
+)
+
+// don't publish the surrounding multi-project build
+publish := {}
