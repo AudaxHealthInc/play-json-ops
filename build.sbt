@@ -60,7 +60,7 @@ lazy val playJsonTests = project in file("playJsonTests") settings(common: _*) s
     "com.typesafe.play" %% "play-json" % "2.3.7",
     "org.scalacheck" %% "scalacheck" % "1.12.2",
     "org.scalatest" %% "scalatest" % "2.2.4",
-    "com.rallyhealth" %% "scalacheck-ops" % "1.0.0"
+    "com.rallyhealth" %% "scalacheck-ops" % "1.1.0"
   )
 )
 
