@@ -63,7 +63,7 @@ lazy val playJsonTests = project in file("playJsonTests") settings(common: _*) s
   name := "play-json-tests",
 
   libraryDependencies ++= Seq(
-    "com.rallyhealth" %% "scalacheck-ops" % "1.0.0",
+    "com.rallyhealth" %% "scalacheck-ops" % "1.2.0",
     "com.typesafe.play" %% "play-json" % playJsonVersion,
     "org.scalacheck" %% "scalacheck" % "1.12.5",
     "org.scalatest" %% "scalatest" % "2.2.6"
