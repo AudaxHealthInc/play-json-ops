@@ -1,12 +1,16 @@
 
 lazy val commonRootSettings = Seq(
-  scalaVersion := "2.11.6",
-  crossScalaVersions := Seq("2.11.6", "2.10.4"),
+  scalaVersion := "2.11.7",
+  crossScalaVersions := Seq("2.11.7", "2.10.4"),
   organization := "com.rallyhealth",
   organizationName := "Rally Health"
 )
 
-commonRootSettings
+lazy val root = Project("root", file("."), Seq(playJsonOps, playJsonTests))
+  .settings(commonRootSettings ++ Seq(
+    // don't publish the surrounding multi-project build
+    publish := {}
+  ))
 
 val playJsonVersion = "2.3.10"
 
@@ -65,6 +69,3 @@ lazy val playJsonTests = project in file("playJsonTests") settings(common: _*) s
     "org.scalatest" %% "scalatest" % "2.2.6"
   )
 )
-
-// don't publish the surrounding multi-project build
-publish := {}
