@@ -14,6 +14,8 @@ trait JsonImplicits extends ImplicitTupleFormats with JsValueImplicits {
 
   implicit def abstractJsonOps(json: Json.type): AbstractJsonOps.type = AbstractJsonOps
 
+  def abstractFormatOps(json: Json.type): AbstractJsonOps.type = AbstractJsonOps
+
   implicit def abstractJsonOps(json: TypeKeyExtractor.type): AbstractJsonOps.type = AbstractJsonOps
 
   /**
