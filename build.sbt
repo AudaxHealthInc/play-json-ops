@@ -1,33 +1,23 @@
 
 lazy val commonRootSettings = Seq(
-  scalaVersion := "2.11.7",
-  crossScalaVersions := Seq("2.11.7", "2.10.4"),
+  scalaVersion := "2.11.8",
   organization := "com.rallyhealth",
   organizationName := "Rally Health"
 )
 
-lazy val root = Project("root", file("."), Seq(playJsonOps, playJsonTests))
+lazy val root = Project("play-json-ops-root", file("."), Seq(playJsonOps, playJsonTests))
   .settings(commonRootSettings ++ Seq(
     // don't publish the surrounding multi-project build
-    publish := {}
+    publish := {},
+    publishLocal := {}
   ))
 
 val playJsonVersion = "2.3.10"
 
 lazy val common = commonRootSettings ++ Seq(
 
-  scalacOptions := {
-    // the deprecation:false flag is only supported by scala >= 2.11.3, but needed for scala >= 2.11.0 to avoid warnings
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMinor)) if scalaMinor >= 11 =>
-        // For scala versions >= 2.11.3
-        Seq("-Xfatal-warnings", "-deprecation:false")
-      case Some((2, scalaMinor)) if scalaMinor < 11 =>
-        // For scala versions 2.10.x
-        Seq("-Xfatal-warnings", "-deprecation")
-    }
-  } ++ Seq(
-    "-feature",
+  // add options not present in rally-sbt-plugin
+  scalacOptions ++= Seq(
     "-Ywarn-dead-code",
     "-encoding", "UTF-8"
   ),
@@ -63,7 +53,7 @@ lazy val playJsonTests = project in file("playJsonTests") settings(common: _*) s
   name := "play-json-tests",
 
   libraryDependencies ++= Seq(
-    "com.rallyhealth" %% "scalacheck-ops" % "1.0.0",
+    "com.rallyhealth" %% "scalacheck-ops" % "1.3.0",
     "com.typesafe.play" %% "play-json" % playJsonVersion,
     "org.scalacheck" %% "scalacheck" % "1.12.5",
     "org.scalatest" %% "scalatest" % "2.2.6"
