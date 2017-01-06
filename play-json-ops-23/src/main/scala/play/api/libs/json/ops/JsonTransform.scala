@@ -1,6 +1,5 @@
 package play.api.libs.json.ops
 
-import play.api.libs.json.ops.JsValueImplicits._
 import play.api.libs.json._
 
 import scala.reflect.ClassTag
