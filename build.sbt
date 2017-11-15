@@ -59,21 +59,27 @@ lazy val `play-json-ops-25` = project in file("play-json-ops-25") settings (
 
 def playJsonTestsCommon(playVersion: String) = common ++ Seq(
   libraryDependencies ++= Seq(
-    "com.rallyhealth" %% "scalacheck-ops" % "1.5.0",
-    "com.typesafe.play" %% "play-json" % playVersion,
-    "org.scalacheck" %% "scalacheck" % "1.12.5",
-    "org.scalatest" %% "scalatest" % "2.2.6"
+    "com.typesafe.play" %% "play-json" % playVersion
   )
 )
 
 lazy val `play-json-tests-23` = project in file("play-json-tests-23") settings (
   playJsonTestsCommon(PlayJsonVersion._23),
   name := "play-json-tests",
-  crossScalaVersions := Seq("2.11.8", "2.10.6")
+  crossScalaVersions := Seq("2.11.8", "2.10.6"),
+  libraryDependencies ++= Seq(
+    "org.scalacheck" %% "scalacheck" % "1.12.5",
+    "org.scalatest" %% "scalatest" % "2.2.6",
+    "com.rallyhealth" %% "scalacheck-ops" % "1.5.0"
+  )
 ) dependsOn `play-json-ops-23`
 
 lazy val `play-json-tests-25` = project in file("play-json-tests-25") settings(common: _*) settings (
   playJsonTestsCommon(PlayJsonVersion._25),
-  name := "play-json-tests-25"
+  name := "play-json-tests-25",
+  libraryDependencies ++= Seq(
+    "org.scalacheck" %% "scalacheck" % "1.13.4",
+    "org.scalatest" %% "scalatest" % "3.0.4",
+    "com.rallyhealth" %% "scalacheck-ops_1-13" % "1.5.0"
+  )
 ) dependsOn `play-json-ops-25`
-
