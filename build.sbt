@@ -1,79 +1,108 @@
+name := "play-json-ops-root"
+organization in ThisBuild := "com.rallyhealth"
+organizationName in ThisBuild := "Rally Health"
 
-lazy val commonRootSettings = Seq(
-  scalaVersion := "2.11.8",
-  organization := "com.rallyhealth",
-  organizationName := "Rally Health"
-)
+scalaVersion in ThisBuild := "2.11.11"
 
-lazy val root = Project("play-json-ops-root", file("."))
-  .aggregate(`play-json-ops-23`, `play-json-tests-23`, `play-json-ops-25`, `play-json-tests-25`)
-  .settings(commonRootSettings ++ Seq(
-    // don't publish the surrounding multi-project build
-    publish := {},
-    publishLocal := {}
-  ))
+// don't publish the surrounding multi-project build
+publish := {}
+publishLocal := {}
 
-val PlayJsonVersion = new {
-  val _23 = "2.3.10"
-  val _25 = "2.5.10"
+def commonProject(id: String): Project = {
+  Project(id, file(id)).settings(
+    name := id,
+
+    // add options not present in rally-sbt-plugin
+    scalacOptions ++= Seq(
+      "-Ywarn-dead-code",
+      "-encoding", "UTF-8"
+    ),
+
+    resolvers ++= Seq(
+      "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
+      "jeffmay at bintray" at "https://dl.bintray.com/jeffmay/maven"
+    ),
+
+    ivyScala := ivyScala.value map {
+      _.copy(overrideScalaVersion = true)
+    },
+
+    // don't publish the test code as an artifact anymore, since we have playJsonTests
+    publishArtifact in Test := false,
+
+    // disable compilation of ScalaDocs, since this always breaks on links
+    sources in(Compile, doc) := Seq.empty,
+
+    // disable publishing empty ScalaDocs
+    publishArtifact in(Compile, packageDoc) := false,
+
+    licenses += ("Apache-2.0", url("http://opensource.org/licenses/apache-2.0"))
+  )
 }
 
-lazy val common = commonRootSettings ++ Seq(
-
-  // add options not present in rally-sbt-plugin
-  scalacOptions ++= Seq(
-    "-Ywarn-dead-code",
-    "-encoding", "UTF-8"
-  ),
-
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
-
-  // don't publish the test code as an artifact anymore, since we have playJsonTests
-  publishArtifact in Test := false,
-
-  // disable compilation of ScalaDocs, since this always breaks on links
-  sources in(Compile, doc) := Seq.empty,
-
-  // disable publishing empty ScalaDocs
-  publishArtifact in (Compile, packageDoc) := false,
-
-  licenses += ("Apache-2.0", url("http://opensource.org/licenses/apache-2.0"))
-)
-
-def playJsonOpsCommon(playVersion: String) = common ++ Seq(
-  libraryDependencies ++= Seq(
-    "com.typesafe.play" %% "play-json" % playVersion
+def playJsonOps(includePlayVersion: String): Project = {
+  val playSuffix = includePlayVersion match {
+    case Dependencies.play23Version => "23"
+    case Dependencies.play25Version => "25"
+  }
+  val legacySuffix = includePlayVersion match {
+    case Dependencies.play23Version => ""
+    case Dependencies.play25Version => "-25"
+  }
+  val id = s"play$playSuffix-json-ops"
+  commonProject(id).settings(
+    // support legacy artifact name for 1.x branch final release
+    name := s"play-json-ops$legacySuffix",
+    libraryDependencies ++= Seq(
+      Dependencies.playJson(includePlayVersion)
+    )
   )
-)
+}
 
-lazy val `play-json-ops-23` = project in file("play-json-ops-23") settings (
-  playJsonOpsCommon(PlayJsonVersion._23),
-  name := "play-json-ops",
-  crossScalaVersions := Seq("2.11.8", "2.10.6")
-)
+lazy val `play23-json-ops` = playJsonOps(Dependencies.play23Version)
+lazy val `play25-json-ops` = playJsonOps(Dependencies.play25Version)
 
-lazy val `play-json-ops-25` = project in file("play-json-ops-25") settings (
-  playJsonOpsCommon(PlayJsonVersion._25),
-  name := "play-json-ops-25"
-)
+def playJsonTests(includePlayVersion: String, includeScalatestVersion: String): Project = {
+  val playSuffix = includePlayVersion match {
+    case Dependencies.play23Version => "23"
+    case Dependencies.play25Version => "25"
+  }
+  val legacySuffix = includePlayVersion match {
+    case Dependencies.play23Version => ""
+    case Dependencies.play25Version => "-25"
+  }
+  val scalacheckSuffix = includeScalatestVersion match {
+    case Dependencies.scalatest2Version => "-sc12"
+    case Dependencies.scalatest3Version => ""
+  }
+  val id = s"play$playSuffix-json-tests$scalacheckSuffix"
+  val projectPath = s"play$playSuffix-json-tests"
+  commonProject(id).settings(
+    // support legacy artifact name for 1.x branch final release
+    name := (includeScalatestVersion match {
+      case Dependencies.scalatest2Version => s"play-json-tests$legacySuffix"
+      case Dependencies.scalatest3Version => id
+    }),
+    // set the source code directories to the shared project root
+    sourceDirectory := file(s"$projectPath/src").getAbsoluteFile,
+    (sourceDirectory in Compile) := file(s"$projectPath/src/main").getAbsoluteFile,
+    (sourceDirectory in Test) := file(s"$projectPath/src/test").getAbsoluteFile,
+    libraryDependencies ++= Seq(
+      Dependencies.scalatest(includeScalatestVersion),
+      Dependencies.scalacheckOps(includeScalatestVersion)
+    )
+  ).dependsOn((includePlayVersion match {
+    case Dependencies.play23Version => Seq(
+      `play23-json-ops`
+    )
+    case Dependencies.play25Version => Seq(
+      `play25-json-ops`
+    )
+  }).map(_ % Compile): _*)
+}
 
-def playJsonTestsCommon(playVersion: String) = common ++ Seq(
-  libraryDependencies ++= Seq(
-    "com.rallyhealth" %% "scalacheck-ops" % "1.5.0",
-    "com.typesafe.play" %% "play-json" % playVersion,
-    "org.scalacheck" %% "scalacheck" % "1.12.5",
-    "org.scalatest" %% "scalatest" % "2.2.6"
-  )
-)
-
-lazy val `play-json-tests-23` = project in file("play-json-tests-23") settings (
-  playJsonTestsCommon(PlayJsonVersion._23),
-  name := "play-json-tests",
-  crossScalaVersions := Seq("2.11.8", "2.10.6")
-) dependsOn `play-json-ops-23`
-
-lazy val `play-json-tests-25` = project in file("play-json-tests-25") settings(common: _*) settings (
-  playJsonTestsCommon(PlayJsonVersion._25),
-  name := "play-json-tests-25"
-) dependsOn `play-json-ops-25`
+lazy val `play23-json-tests-sc12` = playJsonTests(Dependencies.play23Version, Dependencies.scalatest2Version)
+lazy val `play23-json-tests` = playJsonTests(Dependencies.play23Version, Dependencies.scalatest3Version)
+lazy val `play25-json-tests-sc12` = playJsonTests(Dependencies.play25Version, Dependencies.scalatest2Version)
+lazy val `play25-json-tests` = playJsonTests(Dependencies.play25Version, Dependencies.scalatest3Version)
 
