@@ -18,7 +18,7 @@ object Dependencies {
       case `scalatest2Version` => ""
       case `scalatest3Version` => "_1-13"
     }
-    "me.jeffmay" %% s"scalacheck-ops$suffix" % scalacheckOpsVersion
+    "com.rallyhealth" %% s"scalacheck-ops$suffix" % scalacheckOpsVersion
   }
 
   def scalatest(scalatestVersion: String): ModuleID = {
