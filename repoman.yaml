@@ -1,4 +1,6 @@
 ---
 repository:
-  status: active
-  team: Code
+  status: inactive
+  team: Acceleration
+  jira: ETS
+  live: never
